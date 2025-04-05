@@ -6,7 +6,7 @@ export interface IInventory {
   available: boolean;
 }
 
-export interface IProduct extends Document {
+  export interface IProduct extends Document {
   provider: mongoose.Types.ObjectId;
   title: string;
   description?: string;
