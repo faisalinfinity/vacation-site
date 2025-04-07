@@ -1,5 +1,5 @@
 "use client";
-
+import { format } from 'date-fns';
 import React, { useEffect, useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -19,8 +19,9 @@ interface InventoryManagementProps {
 const InventoryManagement: React.FC<InventoryManagementProps> = ({
   productId,
 }) => {
+  // Initialize selectedDate with the current date
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [inventory, setInventory] = useState<IInventoryItem[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [available, setAvailable] = useState<boolean>(true);
 
   // Fetch current inventory for the product
@@ -35,21 +36,22 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({
     fetchInventory();
   }, [productId]);
 
-  // When a date is selected, check if it exists in inventory
-  const handleDateChange = (date: Date) => {
-    setSelectedDate(date);
-    const dateStr = date.toISOString().split("T")[0];
+  const handleDateChange = (
+    value: Date | Date[] | null,
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
+    // If value is null, default to today's date
+    const newDate = Array.isArray(value)
+      ? value[0]
+      : value ?? new Date();
+    setSelectedDate(newDate);
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
     const existing = inventory.find((item) => item.date.startsWith(dateStr));
-    if (existing) {
-      setAvailable(existing.available);
-    } else {
-      setAvailable(true);
-    }
+    setAvailable(existing ? existing.available : true);
   };
-
+  
   const handleSaveInventory = async () => {
-    if (!selectedDate) return;
-    const dateStr = selectedDate.toISOString().split("T")[0];
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
     let newInventory = [...inventory];
     const index = newInventory.findIndex((item) =>
       item.date.startsWith(dateStr)
@@ -78,10 +80,7 @@ const InventoryManagement: React.FC<InventoryManagementProps> = ({
   return (
     <div className="p-4 bg-white rounded shadow">
       <h2 className="text-lg font-bold mb-2">Inventory Management</h2>
-      <Calendar
-        onChange={handleDateChange}
-        value={selectedDate || new Date()}
-      />
+      <Calendar onChange={handleDateChange} value={selectedDate} />
       {selectedDate && (
         <div className="mt-4 flex items-center space-x-4">
           <span>Available:</span>

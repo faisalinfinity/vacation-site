@@ -18,6 +18,14 @@ type Product = {
   inventory: { date: string; available: boolean }[];
 };
 
+// Helper function to format a Date as "YYYY-MM-DD" in local time.
+function formatDate(date: Date): string {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0"); // Months start at 0!
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function ProductDetailsPage() {
   const params = useParams() as { id: string };
   const [product, setProduct] = useState<Product | null>(null);
@@ -31,7 +39,7 @@ export default function ProductDetailsPage() {
   // Set of available dates in "YYYY-MM-DD" format
   const [availableDatesSet, setAvailableDatesSet] = useState<Set<string>>(new Set());
 
-  // Fetch product details
+  // Fetch product details and build available dates set
   useEffect(() => {
     async function fetchProduct() {
       try {
@@ -42,11 +50,12 @@ export default function ProductDetailsPage() {
         const data = await res.json();
         setProduct(data);
 
-        // Build a set of available dates from the inventory array.
+        // Build a set of available dates from the inventory array using local formatting.
         const availSet = new Set<string>();
         data.inventory.forEach((inv: { date: string; available: boolean }) => {
           if (inv.available) {
-            const dateStr = new Date(inv.date).toISOString().split("T")[0];
+            const d = new Date(inv.date);
+            const dateStr = formatDate(d);
             availSet.add(dateStr);
           }
         });
@@ -58,9 +67,9 @@ export default function ProductDetailsPage() {
     fetchProduct();
   }, [params.id]);
 
-  // Helper: Check if a single date is available
+  // Helper: Check if a single date is available (using local formatted date)
   const isDateAvailable = (date: Date): boolean => {
-    const dateStr = date.toISOString().split("T")[0];
+    const dateStr = formatDate(date);
     return availableDatesSet.has(dateStr);
   };
 
@@ -69,7 +78,7 @@ export default function ProductDetailsPage() {
     const dates: string[] = [];
     const current = new Date(start);
     while (current < end) {
-      dates.push(current.toISOString().split("T")[0]);
+      dates.push(formatDate(new Date(current)));
       current.setDate(current.getDate() + 1);
     }
     return dates;
@@ -78,7 +87,7 @@ export default function ProductDetailsPage() {
   // Custom filter for the DatePicker: only allow available dates.
   const filterAvailableDate = (date: Date): boolean => isDateAvailable(date);
 
-  // Booking submission
+  // Booking submission with Stripe integration
   async function handleBooking(e: React.FormEvent) {
     e.preventDefault();
     setBookingMessage("");
@@ -93,7 +102,7 @@ export default function ProductDetailsPage() {
       return;
     }
 
-    // Validate that all dates from checkIn to checkOut (nights booked) are available.
+    // Validate that all dates from checkIn to checkOut are available.
     const datesToCheck = getDatesInRange(checkIn, checkOut);
     const unavailableDates = datesToCheck.filter((d) => !availableDatesSet.has(d));
     if (unavailableDates.length > 0) {
@@ -104,7 +113,8 @@ export default function ProductDetailsPage() {
     }
 
     try {
-      const res = await fetch("/api/bookings", {
+      // Create a Stripe Checkout session via your backend endpoint.
+      const res = await fetch("/api/payment/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -113,13 +123,15 @@ export default function ProductDetailsPage() {
           guestEmail,
           checkIn: checkIn.toISOString(),
           checkOut: checkOut.toISOString(),
+          amount: product?.price, // Use product price or calculate total amount as needed.
         }),
       });
       const data = await res.json();
       if (!res.ok) {
         setBookingMessage(data.error || "Booking failed.");
       } else {
-        setBookingMessage("Booking successful! Confirmation email sent.");
+        // On successful checkout session creation, redirect to Stripe Checkout.
+        window.location.href = data.sessionUrl;
       }
     } catch (err: any) {
       setBookingMessage(err.message);

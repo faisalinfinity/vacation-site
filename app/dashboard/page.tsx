@@ -31,7 +31,12 @@ export default function DashboardPage() {
 
   async function fetchProducts() {
     try {
-      const res = await fetch("/api/products");
+      const res = await fetch("/api/products", {
+        headers: {
+          "Content-Type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+      });
       if (!res.ok) {
         throw new Error("Failed to fetch products");
       }
