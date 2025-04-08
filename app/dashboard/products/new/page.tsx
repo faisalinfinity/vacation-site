@@ -9,17 +9,73 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function NewProductPage() {
   const router = useRouter();
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const [title, setTitle] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [price, setPrice] = useState<number>(0);
-  const [images, setImages] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
-  async function handleSubmit(e: React.FormEvent) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState(0);
+  const [images, setImages] = useState<File[]>([]);
+  const [imageURLs, setImageURLs] = useState<string[]>([]);
+  const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
+
+  const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUD_NAME
+  const UPLOAD_PRESET = process.env.NEXT_PUBLIC_UPLOAD_PRESET
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setImages(files);
+    }
+  };
+
+  const uploadToCloudinary = async () => {
+    setUploading(true);
+    const uploadedURLs: string[] = [];
+
+    for (const image of images) {
+      const formData = new FormData();
+      formData.append("file", image);
+      formData.append("upload_preset", UPLOAD_PRESET);
+
+      try {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+
+        if (data.secure_url) {
+          uploadedURLs.push(data.secure_url);
+        } else {
+          throw new Error("Image upload failed");
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Image upload failed");
+        setUploading(false);
+        return [];
+      }
+    }
+
+    setUploading(false);
+    setImageURLs(uploadedURLs);
+    return uploadedURLs;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (images.length === 0) {
+      setError("Please select at least one image.");
+      return;
+    }
+
+    const uploadedImageURLs = await uploadToCloudinary();
+    if (uploadedImageURLs.length === 0) return;
+
     try {
       const res = await fetch("/api/products", {
         method: "POST",
@@ -31,20 +87,19 @@ export default function NewProductPage() {
           title,
           description,
           price,
-          // Expecting comma-separated URLs; adjust as needed
-          images: images.split(",").map((img) => img.trim()),
+          images: uploadedImageURLs,
           inventory: [],
         }),
       });
+
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to add product");
-      }
+      if (!res.ok) throw new Error(data.error || "Failed to add product");
+
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen p-8 bg-gray-50">
@@ -56,32 +111,15 @@ export default function NewProductPage() {
           {error && <p className="mb-4 text-red-500">{error}</p>}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="title" className="block mb-1">
-                Title
-              </Label>
-              <Input
-                id="title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
+              <Label htmlFor="title">Title</Label>
+              <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
             <div>
-              <Label htmlFor="description" className="block mb-1">
-                Description
-              </Label>
-              <Input
-                id="description"
-                type="text"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
+              <Label htmlFor="description">Description</Label>
+              <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="price" className="block mb-1">
-                Price
-              </Label>
+              <Label htmlFor="price">Price</Label>
               <Input
                 id="price"
                 type="number"
@@ -91,20 +129,29 @@ export default function NewProductPage() {
               />
             </div>
             <div>
-              <Label htmlFor="images" className="block mb-1">
-                Images (comma separated URLs)
-              </Label>
+              <Label htmlFor="images">Images</Label>
               <Input
                 id="images"
-                type="text"
-                value={images}
-                onChange={(e) => setImages(e.target.value)}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
               />
             </div>
-            <Button type="submit" className="w-full">
-              Add Product
+            <Button type="submit" className="w-full" disabled={uploading}>
+              {uploading ? "Uploading Images..." : "Add Product"}
             </Button>
           </form>
+          {imageURLs.length > 0 && (
+            <div className="mt-4">
+              <Label className="block mb-2">Uploaded Previews:</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {imageURLs.map((url, i) => (
+                  <img key={i} src={url} alt={`Uploaded ${i}`} className="w-full h-20 object-cover" />
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
