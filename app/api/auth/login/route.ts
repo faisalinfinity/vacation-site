@@ -1,30 +1,39 @@
-// /app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Provider from "@/models/Provider";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import admin from "@/lib/firebaseAdmin";
 
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
     const body = await request.json();
-    const { email, password } = body;
+    // Expect an idToken from the client generated via Firebase Auth during login.
+    const { idToken } = body;
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "Missing email or password" }, { status: 400 });
+    if (!idToken) {
+      return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
     }
 
-    const provider = await Provider.findOne({ email });
+    // Verify token using Firebase Admin
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const { uid, email, name } = decodedToken;
+    if (!email) {
+      return NextResponse.json({ error: "Email not available in token" }, { status: 400 });
+    }
+
+    // Find provider. Optionally, if the provider doesn't exist, you could create a record.
+    let provider = await Provider.findOne({ email });
     if (!provider) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 400 });
+      provider = await Provider.create({
+        name: name || "",
+        email,
+        password: "", // Not needed when using Firebase.
+        uid,
+      });
     }
 
-    const isMatch = await bcrypt.compare(password, provider.password);
-    if (!isMatch) {
-      return NextResponse.json({ error: "Invalid credentials" }, { status: 400 });
-    }
-
+    // Generate a custom JWT token for your server-side session if needed.
     const token = jwt.sign(
       { id: provider._id, email: provider.email },
       process.env.JWT_SECRET as string,

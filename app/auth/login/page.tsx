@@ -1,4 +1,3 @@
-// app/auth/login/page.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -7,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getAuth, signInWithEmailAndPassword, getIdToken } from "firebase/auth";
+import "@/lib/firebaseClient"; // Ensure Firebase is initialized
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,16 +19,24 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     try {
+      const auth = getAuth();
+      // Sign in with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      // Get the Firebase ID token (force refresh)
+      const idToken = await getIdToken(user, true);
+
+      // Send the ID token to our Next.js API endpoint for Firebase verification and custom JWT generation
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ idToken }),
       });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Something went wrong");
       } else {
-        // Save token and redirect to dashboard or homepage
+        // Save the custom JWT token for your server-side authorization, then redirect.
         localStorage.setItem("token", data.token);
         router.push("/dashboard");
       }
