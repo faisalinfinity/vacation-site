@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         {
           price_data: {
             currency: "usd",
-            unit_amount: Math.round(amount * 100), // amount in cents
+            unit_amount: Math.round((amount + 60) * 100), // amount in cents
             product_data: {
               name: `Booking for product ${product}`,
               description: `Booking from ${checkIn.split("T")[0]} to ${
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         product,
         checkIn,
         checkOut,
-        guestEmail
+        guestEmail,
       },
     });
 
