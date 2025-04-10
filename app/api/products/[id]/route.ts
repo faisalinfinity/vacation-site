@@ -5,13 +5,13 @@ import Product from "@/models/Product";
 import { verifyToken } from "@/middleware/auth";
 
 interface Params {
-  params: { id: string };
+  params:Promise< { id: string }>;
 }
 
 export async function GET(request: NextRequest, { params }: Params) {
   try {
     await dbConnect();
-    const { id } = params;
+    const { id } =await params;
     const product = await Product.findById(id);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
@@ -32,7 +32,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const token = authHeader.split(" ")[1];
     const decoded = verifyToken(token);
 
-    const { id } = params;
+    const { id } =await params;
     const product = await Product.findById(id);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
@@ -59,7 +59,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     const token = authHeader.split(" ")[1];
     const decoded = verifyToken(token);
 
-    const { id } = params;
+    const { id } =await params;
     const product = await Product.findById(id);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });

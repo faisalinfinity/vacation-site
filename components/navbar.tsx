@@ -1,12 +1,13 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
-
+import Link from "next/link";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Menu, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 export default function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <nav className="bg-white border-b sticky top-0 z-50">
@@ -24,10 +25,10 @@ export default function Navbar() {
                 Home
               </Link>
               <Link
-                href="/destinations"
+                href="/dashboard"
                 className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 border-b-2 border-transparent hover:border-teal-500 hover:text-gray-700"
               >
-                Destinations
+                Provider Dashboard
               </Link>
               <Link
                 href="/deals"
@@ -44,10 +45,16 @@ export default function Navbar() {
             </div>
           </div>
           <div className="hidden md:flex items-center">
-            <Button variant="outline" className="mr-3">
+            <Button
+              onClick={() => router.push("/auth/login")}
+              variant="outline"
+              className="mr-3"
+            >
               Sign In
             </Button>
-            <Button>Sign Up</Button>
+            <Button onClick={() => router.push("/auth/register")}>
+              Sign Up
+            </Button>
           </div>
           <div className="flex items-center md:hidden">
             <button
@@ -55,7 +62,11 @@ export default function Navbar() {
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-teal-500"
             >
               <span className="sr-only">Open main menu</span>
-              {isMenuOpen ? <X className="block h-6 w-6" /> : <Menu className="block h-6 w-6" />}
+              {isMenuOpen ? (
+                <X className="block h-6 w-6" />
+              ) : (
+                <Menu className="block h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
@@ -73,11 +84,11 @@ export default function Navbar() {
               Home
             </Link>
             <Link
-              href="/destinations"
+              href="/dashboard"
               className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
               onClick={() => setIsMenuOpen(false)}
             >
-              Destinations
+             Provider Dashboard
             </Link>
             <Link
               href="/deals"
@@ -96,10 +107,23 @@ export default function Navbar() {
           </div>
           <div className="pt-4 pb-3 border-t border-gray-200">
             <div className="flex items-center px-4 space-x-3">
-              <Button variant="outline" className="w-full" onClick={() => setIsMenuOpen(false)}>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  router.push("/auth/login");
+                  setIsMenuOpen(false);
+                }}
+              >
                 Sign In
               </Button>
-              <Button className="w-full" onClick={() => setIsMenuOpen(false)}>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  router.push("/auth/register");
+                  setIsMenuOpen(false);
+                }}
+              >
                 Sign Up
               </Button>
             </div>
@@ -107,5 +131,5 @@ export default function Navbar() {
         </div>
       )}
     </nav>
-  )
+  );
 }

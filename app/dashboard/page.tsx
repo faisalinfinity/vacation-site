@@ -118,14 +118,6 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
             <Card key={product._id} className="overflow-hidden hover:shadow-md transition-shadow">
-              <div className="h-40 bg-gray-200 relative">
-                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                  <MapPin className="h-8 w-8" />
-                </div>
-                <div className="absolute top-3 right-3">
-                  <Badge className="bg-teal-100 text-teal-800 hover:bg-teal-200">Active</Badge>
-                </div>
-              </div>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">{product.title}</CardTitle>
               </CardHeader>

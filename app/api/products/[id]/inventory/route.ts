@@ -3,14 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Product from "@/models/Product";
 
-interface Params {
-  params: { id: string };
-}
-
-export async function GET(request: NextRequest, { params }: Params) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await dbConnect();
-    const product = await Product.findById(params.id).select("inventory");
+    const id= (await params).id
+    const product = await Product.findById(id).select("inventory");
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
@@ -20,11 +20,14 @@ export async function GET(request: NextRequest, { params }: Params) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: Params) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params:  Promise<{ id: string }> }
+) {
   try {
     await dbConnect();
     const { inventory } = await request.json(); // inventory: Array<{ date: string, available: boolean }>
-    const product = await Product.findById(params.id);
+    const product = await Product.findById((await params).id);
     if (!product) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }

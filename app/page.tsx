@@ -1,51 +1,49 @@
-"use client"
-
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import Navbar from "@/components/navbar"
-import HeroSection from "@/components/hero-section"
-import FeaturedSection from "@/components/featured-section"
-import Footer from "@/components/footer"
-import { Calendar, MapPin, Star } from "lucide-react"
+// app/page.tsx
+import Link from "next/link";
+import Navbar from "@/components/navbar";
+import HeroSection from "@/components/hero-section";
+import Footer from "@/components/footer";
+import { Calendar, MapPin, Star } from "lucide-react";
 
 type Product = {
-  _id: string
-  title: string
-  description?: string
-  price: number
-  images: string[]
+  _id: string;
+  title: string;
+  description?: string;
+  price: number;
+  images: string[];
+};
+
+async function getProducts(): Promise<Product[]> {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/products/available`, {
+
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error("Failed to fetch available products");
+  }
+  return res.json();
 }
 
-export default function HomePage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [error, setError] = useState<string>("")
-
-  useEffect(() => {
-    async function fetchAvailableProducts() {
-      try {
-        const res = await fetch("/api/products/available")
-        if (!res.ok) {
-          throw new Error("Failed to fetch available products")
-        }
-        const data = await res.json()
-        setProducts(data)
-      } catch (err: any) {
-        setError(err.message)
-      }
-    }
-    fetchAvailableProducts()
-  }, [])
+export default async function HomePage() {
+  let products: Product[] = [];
+  let error = "";
+  try {
+    products = await getProducts();
+  } catch (err: any) {
+    error = err.message;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <HeroSection />
-      <FeaturedSection />
 
       <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">Discover weekend getaways</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Discover weekend getaways
+            </h2>
             <p className="text-gray-600 mt-2">Showing deals for: This Month</p>
           </div>
 
@@ -61,7 +59,10 @@ export default function HomePage() {
                 <div className="group rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 bg-white h-full flex flex-col">
                   <div className="relative h-56 w-full overflow-hidden">
                     <img
-                      src={product.images?.[0] || "/placeholder.svg?height=400&width=600"}
+                      src={
+                        product.images?.[0] ||
+                        "/placeholder.svg?height=400&width=600"
+                      }
                       alt={product.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -76,7 +77,9 @@ export default function HomePage() {
                       <span>Popular location</span>
                     </div>
 
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">{product.title}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-1">
+                      {product.title}
+                    </h3>
 
                     <p className="text-gray-600 text-sm mb-3 line-clamp-2 flex-1">
                       {product.description ||
@@ -91,9 +94,13 @@ export default function HomePage() {
                     <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-100">
                       <p className="font-bold text-lg text-teal-700">
                         ${product.price}
-                        <span className="text-sm font-normal text-gray-500">/night</span>
+                        <span className="text-sm font-normal text-gray-500">
+                          /night
+                        </span>
                       </p>
-                      <span className="text-sm text-teal-600 font-medium">View Details</span>
+                      <span className="text-sm text-teal-600 font-medium">
+                        View Details
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -107,5 +114,5 @@ export default function HomePage() {
         <Footer />
       </div>
     </div>
-  )
+  );
 }

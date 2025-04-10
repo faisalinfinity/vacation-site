@@ -1,22 +1,31 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Calendar, Home, LayoutDashboard, LogOut, MessageSquare, PlusCircle, Settings, User } from "lucide-react"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Calendar,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  MessageSquare,
+  PlusCircle,
+  Settings,
+  User,
+} from "lucide-react";
 
 export default function DashboardSidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   const isActive = (path: string) => {
-    return pathname === path || pathname?.startsWith(path + "/")
-  }
+    return pathname === path || pathname?.startsWith(path + "/");
+  };
 
   const handleLogout = () => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("token")
-      window.location.href = "/auth/login"
+      localStorage.removeItem("token");
+      window.location.href = "/auth/login";
     }
-  }
+  };
 
   const menuItems = [
     {
@@ -49,7 +58,7 @@ export default function DashboardSidebar() {
       href: "/dashboard/settings",
       icon: <Settings className="h-5 w-5" />,
     },
-  ]
+  ];
 
   return (
     <div className="h-full bg-white border-r flex flex-col">
@@ -67,7 +76,9 @@ export default function DashboardSidebar() {
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                isActive(item.href) ? "bg-teal-50 text-teal-700 font-medium" : "text-gray-700 hover:bg-gray-100"
+                isActive(item.href)
+                  ? "bg-teal-50 text-teal-700 font-medium"
+                  : "text-gray-700 hover:bg-gray-100"
               }`}
             >
               {item.icon}
@@ -87,5 +98,5 @@ export default function DashboardSidebar() {
         </button>
       </div>
     </div>
-  )
+  );
 }

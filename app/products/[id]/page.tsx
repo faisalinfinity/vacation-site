@@ -445,17 +445,6 @@ export default function ProductDetailsPage() {
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-sm">
-                <h3 className="text-xl font-semibold mb-4">Location</h3>
-                <div className="aspect-video bg-gray-200 rounded-lg mb-3">
-                  <img
-                    src="/placeholder.svg?height=300&width=500"
-                    alt="Map location"
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-                </div>
-                <p className="text-gray-700">Exact location provided after booking for privacy and security reasons.</p>
-              </div>
             </div>
           </div>
         </div>
